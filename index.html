@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Student Information System - Pink</title>
+
+<style>
+/* ===== Body ===== */
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #ffd6e7, #ffe6f2);
+    margin: 0;
+    padding: 0;
+}
+
+/* ===== Container ===== */
+.container {
+    width: 90%;
+    max-width: 950px;
+    margin: 40px auto;
+    background: white;
+    padding: 25px;
+    border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+/* ===== Title ===== */
+h1 {
+    text-align: center;
+    color: #e60073;
+}
+
+/* ===== Menu ===== */
+.menu {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.menu button {
+    background: #ff66a3;
+    border: none;
+    color: white;
+    padding: 10px 15px;
+    margin: 5px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: 0.3s;
+}
+
+.menu button:hover {
+    background: #e60073;
+    transform: scale(1.05);
+}
+
+/* ===== Inputs ===== */
+input {
+    width: 100%;
+    padding: 10px;
+    margin: 6px 0;
+    border-radius: 10px;
+    border: 1px solid #ffc2d9;
+    outline: none;
+}
+
+input:focus {
+    border-color: #ff66a3;
+}
+
+/* ===== Buttons ===== */
+.section button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 8px;
+    background: #ff66a3;
+    border: none;
+    color: white;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.section button:hover {
+    background: #e60073;
+}
+
+/* ===== Table ===== */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+th {
+    background: #ff66a3;
+    color: white;
+    padding: 10px;
+}
+
+td {
+    border: 1px solid #ffd6e7;
+    padding: 8px;
+    text-align: center;
+}
+
+/* ===== Hidden Sections ===== */
+.hidden {
+    display: none;
+}
+
+/* ===== Notification ===== */
+#notification {
+    text-align: center;
+    color: #e60073;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Student Information System</h1>
+    <div id="notification"></div>
+
+    <!-- Menu -->
+    <div class="menu">
+        <button onclick="showSection('add')">Add</button>
+        <button onclick="showSection('view')">View</button>
+        <button onclick="showSection('search')">Search</button>
+        <button onclick="showSection('update')">Update</button>
+        <button onclick="showSection('delete')">Delete</button>
+    </div>
+
+    <!-- Add -->
+    <div id="addSection" class="section">
+        <input id="id" placeholder="Student ID">
+        <input id="name" placeholder="Full Name">
+        <input id="course" placeholder="Course">
+        <input id="year" placeholder="Year Level">
+        <input id="age" type="number" placeholder="Age">
+        <button onclick="addStudent()">Save Student</button>
+    </div>
+
+    <!-- View -->
+    <div id="viewSection" class="section hidden">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Course</th>
+                    <th>Year</th>
+                    <th>Age</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+
+    <!-- Search -->
+    <div id="searchSection" class="section hidden">
+        <input id="searchInput" placeholder="Enter ID or Name">
+        <button onclick="searchStudent()">Search</button>
+        <table>
+            <tbody id="searchBody"></tbody>
+        </table>
+    </div>
+
+    <!-- Update -->
+    <div id="updateSection" class="section hidden">
+        <input id="updateId" placeholder="Student ID">
+        <input id="updateCourse" placeholder="New Course">
+        <input id="updateYear" placeholder="New Year">
+        <input id="updateAge" type="number" placeholder="New Age">
+        <button onclick="updateStudent()">Update Student</button>
+    </div>
+
+    <!-- Delete -->
+    <div id="deleteSection" class="section hidden">
+        <input id="deleteId" placeholder="Student ID">
+        <button onclick="deleteStudent()">Delete Student</button>
+    </div>
+
+</div>
+
+<script>
+// ===== Helper =====
+function getStudents() {
+    return JSON.parse(localStorage.getItem("students")) || [];
+}
+
+function saveStudents(data) {
+    localStorage.setItem("students", JSON.stringify(data));
+}
+
+function notify(msg) {
+    document.getElementById("notification").textContent = msg;
+    setTimeout(() => {
+        document.getElementById("notification").textContent = "";
+    }, 3000);
+}
+
+// ===== Section Control =====
+function showSection(section) {
+    document.querySelectorAll(".section").forEach(s => s.classList.add("hidden"));
+
+    if(section === "add") document.getElementById("addSection").classList.remove("hidden");
+    if(section === "view") {
+        document.getElementById("viewSection").classList.remove("hidden");
+        displayStudents();
+    }
+    if(section === "search") document.getElementById("searchSection").classList.remove("hidden");
+    if(section === "update") document.getElementById("updateSection").classList.remove("hidden");
+    if(section === "delete") document.getElementById("deleteSection").classList.remove("hidden");
+}
+
+// ===== Add =====
+function addStudent() {
+    let id = document.getElementById("id").value;
+    let name = document.getElementById("name").value;
+    let course = document.getElementById("course").value;
+    let year = document.getElementById("year").value;
+    let age = document.getElementById("age").value;
+
+    if(!id || !name || !course || !year || !age){
+        notify("Fill all fields");
+        return;
+    }
+
+    let students = getStudents();
+
+    if(students.find(s => s.id === id)){
+        notify("ID already exists");
+        return;
+    }
+
+    students.push({id, name, course, year, age});
+    saveStudents(students);
+    notify("Student Added");
+}
+
+// ===== View =====
+function displayStudents(){
+    let students = getStudents();
+    let body = document.getElementById("tableBody");
+    body.innerHTML = "";
+
+    students.forEach(s => {
+        body.innerHTML += `
+        <tr>
+            <td>${s.id}</td>
+            <td>${s.name}</td>
+            <td>${s.course}</td>
+            <td>${s.year}</td>
+            <td>${s.age}</td>
+        </tr>`;
+    });
+}
+
+// ===== Search =====
+function searchStudent(){
+    let key = document.getElementById("searchInput").value.toLowerCase();
+    let students = getStudents();
+    let body = document.getElementById("searchBody");
+    body.innerHTML = "";
+
+    students.filter(s =>
+        s.id.toLowerCase().includes(key) ||
+        s.name.toLowerCase().includes(key)
+    ).forEach(s => {
+        body.innerHTML += `
+        <tr>
+            <td>${s.id}</td>
+            <td>${s.name}</td>
+            <td>${s.course}</td>
+            <td>${s.year}</td>
+            <td>${s.age}</td>
+        </tr>`;
+    });
+}
+
+// ===== Update =====
+function updateStudent(){
+    let id = document.getElementById("updateId").value;
+    let students = getStudents();
+    let student = students.find(s => s.id === id);
+
+    if(!student){
+        notify("Student not found");
+        return;
+    }
+
+    let course = document.getElementById("updateCourse").value;
+    let year = document.getElementById("updateYear").value;
+    let age = document.getElementById("updateAge").value;
+
+    if(course) student.course = course;
+    if(year) student.year = year;
+    if(age) student.age = age;
+
+    saveStudents(students);
+    notify("Student Updated");
+}
+
+// ===== Delete =====
+function deleteStudent(){
+    let id = document.getElementById("deleteId").value;
+    let students = getStudents();
+
+    let newData = students.filter(s => s.id !== id);
+
+    if(newData.length === students.length){
+        notify("Student not found");
+        return;
+    }
+
+    saveStudents(newData);
+    notify("Student Deleted");
+}
+</script>
+
+</body>
+</html>
